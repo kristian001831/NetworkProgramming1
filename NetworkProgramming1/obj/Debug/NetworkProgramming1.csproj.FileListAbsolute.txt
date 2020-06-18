@@ -1,0 +1,6 @@
+/Users/kristian/GitHubProjects/NetworkProgrammingLessons/NetworkProgramming1/NetworkProgramming1/bin/Debug/NetworkProgramming1.exe
+/Users/kristian/GitHubProjects/NetworkProgrammingLessons/NetworkProgramming1/NetworkProgramming1/bin/Debug/NetworkProgramming1.pdb
+/Users/kristian/GitHubProjects/NetworkProgrammingLessons/NetworkProgramming1/NetworkProgramming1/obj/Debug/NetworkProgramming1.csprojAssemblyReference.cache
+/Users/kristian/GitHubProjects/NetworkProgrammingLessons/NetworkProgramming1/NetworkProgramming1/obj/Debug/NetworkProgramming1.csproj.CoreCompileInputs.cache
+/Users/kristian/GitHubProjects/NetworkProgrammingLessons/NetworkProgramming1/NetworkProgramming1/obj/Debug/NetworkProgramming1.exe
+/Users/kristian/GitHubProjects/NetworkProgrammingLessons/NetworkProgramming1/NetworkProgramming1/obj/Debug/NetworkProgramming1.pdb
