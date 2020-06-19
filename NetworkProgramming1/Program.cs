@@ -1,83 +1,69 @@
-﻿using System.Net.Sockets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Net;
-using System.Threading.Tasks;
+using System.Net.Sockets;
 using System.Text;
 
-namespace NetworkProgramming1
+namespace UDP
 {
-    internal class Program
+    public class UDPSocket
     {
-        static int PORT = 23554;
-        
-        public static void Main(string[] args)
-        {
-            Console.WriteLine("Are you listener (1) or sender? (2)");// TODO: also learn TCP and UDP
-            ConsoleKeyInfo key = Console.ReadKey();
-            if (key.Key == ConsoleKey.D1)
-            {
-                StartListener();
-            }
-            else
-            {
-                SendData();
-            }
+        private Socket _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        private const int bufSize = 8 * 1024;
+        private State state = new State();
+        private EndPoint epFrom = new IPEndPoint(IPAddress.Any, 0);
+        private AsyncCallback recv = null;
 
-            Console.ReadKey();
+        public class State
+        {
+            public byte[] buffer = new byte[bufSize];
         }
 
-        private static void StartListener()
+        public void Server(string address, int port)
         {
-            UdpClient listener = new UdpClient(PORT);
-            IPEndPoint ip = new IPEndPoint(IPAddress.Any, PORT);
-
-            bool b = false;
-            try
-            {
-                byte[] data = listener.Receive(ref ip); 
-                Console.WriteLine(Encoding.ASCII.GetString(data));
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine(e.Message);
-            }
-            finally
-            {
-                listener.Close();// closes the udp 
-            }
-            
-            Console.ReadKey();
+            _socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.ReuseAddress, true);
+            _socket.Bind(new IPEndPoint(IPAddress.Parse(address), port));
+            Receive();            
         }
 
-        private static void SendData()
+        public void Client(string address, int port)
         {
-            UdpClient sender = new UdpClient(); // UdpClient can be send for both send and receive(a fire and forget
-                                                // method, but needs the port, we want to work with)
-            StringBuilder sb = new StringBuilder(15000000);// effizient for longer strings...
+            _socket.Connect(IPAddress.Parse(address), port);
+            Receive();            
+        }
 
-            string message = "";
+        public void Send(string text)
+        {
+            byte[] data = Encoding.ASCII.GetBytes(text);
+            _socket.BeginSend(data, 0, data.Length, SocketFlags.None, (ar) =>
+            {
+                State so = (State)ar.AsyncState;
+                int bytes = _socket.EndSend(ar);
+                Console.WriteLine("SEND: {0}, {1}", bytes, text);
+            }, state);
+        }
 
-            for (int i = 0; i < 500; i++)
+        private void Receive()
+        {            
+            _socket.BeginReceiveFrom(state.buffer, 0, bufSize, SocketFlags.None, ref epFrom, recv = (ar) =>
             {
-                sb.Append("Hello World!");
-            }
+                State so = (State)ar.AsyncState;
+                int bytes = _socket.EndReceiveFrom(ar, ref epFrom);
+                _socket.BeginReceiveFrom(so.buffer, 0, bufSize, SocketFlags.None, ref epFrom, recv, so);
+                Console.WriteLine("RECV: {0}: {1}, {2}", epFrom.ToString(), bytes, Encoding.ASCII.GetString(so.buffer, 0, bytes));
+            }, state);
+        }
+    }
+    
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            UDPSocket s = new UDPSocket();
+            s.Server("127.0.0.1", 27000);
 
-            byte[] data = Encoding.ASCII.GetBytes(sb.ToString());
-
-            try
-            {
-                sender.Send(data, data.Length, "localhost", PORT); // sending bytes; define how many and where
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine(e.Message);
-            }
-            finally
-            {
-                sender.Close();
-            }
+            UDPSocket c = new UDPSocket();
+            c.Client("127.0.0.1", 27000);
+            c.Send("TEST!");
 
             Console.ReadKey();
         }
